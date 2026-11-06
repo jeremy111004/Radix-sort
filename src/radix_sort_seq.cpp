@@ -1,5 +1,5 @@
 #include <algorithm>
-#include "radix_sort_seq.hpp"
+#include "../include/radix_sort_seq.hpp"
 
 int get_digit(int x, int digit) {        
 	int key = 0;
