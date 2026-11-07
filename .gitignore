@@ -6,3 +6,5 @@ ex
 main
 benchmark/main
 build/
+perf.data.old
+perf.data
