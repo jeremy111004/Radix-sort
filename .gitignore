@@ -8,3 +8,4 @@ benchmark/main
 build/
 perf.data.old
 perf.data
+benchmark_radix_sort1

@@ -2,16 +2,6 @@
 #include <algorithm>
 
 
-
-static unsigned const int mask = (1u<<nbr_bit)-1;
-
-unsigned int get_byte(unsigned int x, int digit) {   
-	unsigned int key = 0;
-        x>>=((digit-1)*nbr_bit); // assuming digit 1 means first part of the bit, so if we want digit 1 we actually don't move anything
-	key = (x&mask);
-    	return key;
-}
-
 std::vector<unsigned int> counting_sort_byte(const std::vector<unsigned int>& vec, int digit,int vec_s){
 	int nmr_el = vec_s;
 	int size_cnt = 1u<<nbr_bit; 

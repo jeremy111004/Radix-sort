@@ -1,0 +1,61 @@
+Working notes and observations while building the project. These are my thoughts
+and thinking process, not polished results.
+
+Notes start at the parallel radix because before that it was fairly simple optimization, and quite straightforward.
+
+I tried to parallelized only half of the radix byte (namely the counting part), to see how it'd perform. My results were the following
+
+jeremy1110@fedora:~/msc_hpc/radix_sort$ for n in {1..5}; do ./bench; done
+Average basic radix duration : 11911.2 us
+Average std::sort duration : 4836 us
+Average bytes radix duration : 867.4 us and the number of bits used counting sort was 8
+Average bytes parallel radix duration, using 1 threads, was 1051.4
+Average bytes parallel radix duration, using 2 threads, was 759.8
+Average bytes parallel radix duration, using 4 threads, was 732.4
+Average bytes parallel radix duration, using 8 threads, was 785.4
+Average bytes parallel radix duration, using 16 threads, was 949Average basic radix duration : 11597.6 us
+Average std::sort duration : 4882 us
+Average bytes radix duration : 868 us and the number of bits used counting sort was 8
+Average bytes parallel radix duration, using 1 threads, was 1051.4
+Average bytes parallel radix duration, using 2 threads, was 736.2
+Average bytes parallel radix duration, using 4 threads, was 733
+Average bytes parallel radix duration, using 8 threads, was 759.8
+Average bytes parallel radix duration, using 16 threads, was 901.4Average basic radix duration : 11893.8 us
+Average std::sort duration : 4857.6 us
+Average bytes radix duration : 880.6 us and the number of bits used counting sort was 8
+Average bytes parallel radix duration, using 1 threads, was 1076.4
+Average bytes parallel radix duration, using 2 threads, was 717.8
+Average bytes parallel radix duration, using 4 threads, was 714
+Average bytes parallel radix duration, using 8 threads, was 769.2
+Average bytes parallel radix duration, using 16 threads, was 994.2Average basic radix duration : 11646.4 us
+Average std::sort duration : 4867 us
+Average bytes radix duration : 870.4 us and the number of bits used counting sort was 8
+Average bytes parallel radix duration, using 1 threads, was 1087.8
+Average bytes parallel radix duration, using 2 threads, was 771.8
+Average bytes parallel radix duration, using 4 threads, was 786
+Average bytes parallel radix duration, using 8 threads, was 926.2
+Average bytes parallel radix duration, using 16 threads, was 1175.8Average basic radix duration : 8907.2 us
+Average std::sort duration : 3578.6 us
+Average bytes radix duration : 644 us and the number of bits used counting sort was 8
+Average bytes parallel radix duration, using 1 threads, was 787.2
+Average bytes parallel radix duration, using 2 threads, was 545.6
+Average bytes parallel radix duration, using 4 threads, was 545.2
+Average bytes parallel radix duration, using 8 threads, was 586
+Average bytes parallel radix duration, using 16 threads, was 700.6jeremy1110@fedora:~/msc_hpc/radix_sort$ 
+
+| Version                         | Time (µs) | vs sequential byte radix |
+|---------------------------------|-----------|--------------------------|
+| Decimal radix sort              | 11,646    | 0.07×                    |
+| std::sort                       | 4,858     | 0.18×                    |
+| Byte radix sort (sequential)    | 868       | 1.00×                    |
+| Byte radix, parallel, 1 thread  | 1,051     | 0.83×                    |
+| Byte radix, parallel, 2 threads | 736       | 1.18×                    |
+| Byte radix, parallel, 4 threads | 732       | 1.19×                    |
+| Byte radix, parallel, 8 threads | 769       | 1.13×                    |
+| Byte radix, parallel, 16 threads| 949       | 0.91×                    |
+
+Using my own laptop, on Fedora (32 hardware threads), `g++ -O2 -std=c++17 -fopenmp`,
+n = 100,000 `rand()` values, 8 bits per digit, 5 runs per execution, 5 executions.
+Times are the median of the 5 executions.
+We see an improvement, but it's quite light. I'd say the openMP threads coordination is the culprit, + Amdham's law obviously. I'll now try to parallelize the scatter part as well.
+
