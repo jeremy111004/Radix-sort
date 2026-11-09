@@ -56,7 +56,7 @@ void counting_sort_byte_parallel(const std::vector<unsigned int>& vec, int digit
 	t_scatter += e - d;
 	
 }
-std::vector<unsigned int> radix_sort_byte_parallel(std::vector<unsigned int>& vec, int vec_s, int nmr_threads){
+void radix_sort_byte_parallel(std::vector<unsigned int>& vec, int vec_s, int nmr_threads){
 	
 	std::vector<unsigned int> ans(vec_s,0);
 	auto max_e = *std::max_element(vec.begin(),vec.end());
@@ -69,8 +69,6 @@ std::vector<unsigned int> radix_sort_byte_parallel(std::vector<unsigned int>& ve
 	for(int i = 1;i<=size;i++){
 		counting_sort_byte_parallel(vec, i, vec_s,nmr_threads,ans);
 		std::swap(vec,ans);
-	}
-	return vec;
-	
+	}	
 }
 

@@ -52,14 +52,16 @@ int main(void){
 		std::vector<int> threads = {1,2, 4, 8, 16};
 		for (size_t t = 0; t < threads.size(); t++) {
 			t_count = t_prefix = t_alloc = t_scatter = 0;
-			auto start4 = std::chrono::high_resolution_clock::now();
-			auto res3 = radix_sort_byte_parallel(test_vec4, 10000000, threads[t]);
+			std::vector<unsigned int> test_vec4 = test_vec3;
+			auto start4 = std::chrono::high_resolution_clock::now();			
+			
+			radix_sort_byte_parallel(test_vec4, 10000000, threads[t]);
 			auto end4 = std::chrono::high_resolution_clock::now();
 			auto duration4 = std::chrono::duration_cast<std::chrono::microseconds>(end4 - start4);
 			time_vec4[t].push_back(duration4.count());
 
 			// re cast to check veracity of results
-			std::vector<int> res3_int(res3.begin(), res3.end());
+			std::vector<int> res3_int(test_vec4.begin(), test_vec4.end());
 			if (res3_int != test_vec2) { std::cout << "parallel radix is wrong with " << threads[t] << " threads\n"; }
 			std::cout << threads[t] << " threads | count "  << t_count*1e3
           	<< " ms | prefix "  << t_prefix*1e3

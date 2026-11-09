@@ -14,34 +14,7 @@ Average bytes parallel radix duration, using 2 threads, was 759.8
 Average bytes parallel radix duration, using 4 threads, was 732.4
 Average bytes parallel radix duration, using 8 threads, was 785.4
 Average bytes parallel radix duration, using 16 threads, was 949Average basic radix duration : 11597.6 us
-Average std::sort duration : 4882 us
-Average bytes radix duration : 868 us and the number of bits used counting sort was 8
-Average bytes parallel radix duration, using 1 threads, was 1051.4
-Average bytes parallel radix duration, using 2 threads, was 736.2
-Average bytes parallel radix duration, using 4 threads, was 733
-Average bytes parallel radix duration, using 8 threads, was 759.8
-Average bytes parallel radix duration, using 16 threads, was 901.4Average basic radix duration : 11893.8 us
-Average std::sort duration : 4857.6 us
-Average bytes radix duration : 880.6 us and the number of bits used counting sort was 8
-Average bytes parallel radix duration, using 1 threads, was 1076.4
-Average bytes parallel radix duration, using 2 threads, was 717.8
-Average bytes parallel radix duration, using 4 threads, was 714
-Average bytes parallel radix duration, using 8 threads, was 769.2
-Average bytes parallel radix duration, using 16 threads, was 994.2Average basic radix duration : 11646.4 us
-Average std::sort duration : 4867 us
-Average bytes radix duration : 870.4 us and the number of bits used counting sort was 8
-Average bytes parallel radix duration, using 1 threads, was 1087.8
-Average bytes parallel radix duration, using 2 threads, was 771.8
-Average bytes parallel radix duration, using 4 threads, was 786
-Average bytes parallel radix duration, using 8 threads, was 926.2
-Average bytes parallel radix duration, using 16 threads, was 1175.8Average basic radix duration : 8907.2 us
-Average std::sort duration : 3578.6 us
-Average bytes radix duration : 644 us and the number of bits used counting sort was 8
-Average bytes parallel radix duration, using 1 threads, was 787.2
-Average bytes parallel radix duration, using 2 threads, was 545.6
-Average bytes parallel radix duration, using 4 threads, was 545.2
-Average bytes parallel radix duration, using 8 threads, was 586
-Average bytes parallel radix duration, using 16 threads, was 700.6jeremy1110@fedora:~/msc_hpc/radix_sort$ 
+
 
 | Version                         | Time (µs) | vs sequential byte radix |
 |---------------------------------|-----------|--------------------------|
@@ -82,6 +55,8 @@ We see an improvement, but it's quite light. I'd say the openMP threads coordina
 | cpp:42 | `ans[place] = cur_d`                 | 30.5%     |
 | other  | `vec[i]`, `get_byte`, reading `place`| ~4%       |
 
+# from here on, I manually increased the problem size: from 100,000 unsigned int to 10,000,000 unsigned int, so from 4 bytes*100,000 = 400KB to 4 bytes*10,000,000=40MB, otherwise the parallel sort isn't really interesting to see in action.
+*
 I'm going to try to improve the data loading to reduce that huge part of the cpu's time which is just to fetch the correct place to increment it
 
 09/11: I measured how long each part of the program takes with omp_get_wtime(); to see where is the program actually spending time, and here is the result :
@@ -91,7 +66,27 @@ I'm going to try to improve the data loading to reduce that huge part of the cpu
 8 threads | count 5.59814 ms | prefix 0.015434 ms | alloc 55.3473 ms | scatter 13.9651 ms
 16 threads | count 7.05139 ms | prefix 0.028496 ms | alloc 55.2927 ms | scatter 9.94248 ms
 
-count gets better with multithreading, prefix seems a bit random but is a very small share of the time anyway, alloc is steady, and scatter significantly improve with more threads. 
+count gets better with multithreading, prefix grows with threads number but is a very small share of the time anyway, alloc is steady, and scatter significantly improve with more threads. 
 Alloc takes more than half of each run, which makes sense as the vector used are really big, but I need to think of a better way
 
 I implemented it by changing the way it handles vec; now instead of creating a new ans vector at every pass (up to 4),it uses the same address and simply recycle it. Counting sort is now void.
+
+Average basic radix duration : 967629 us
+Average std::sort duration : 482849 us
+Average bytes radix duration : 132953 us and the number of bits used counting sort was 8
+Average bytes parallel radix duration, using 1 threads, was 91322.6 us
+Average bytes parallel radix duration, using 2 threads, was 71685.4 us 
+Average bytes parallel radix duration, using 4 threads, was 64917.2 us 
+Average bytes parallel radix duration, using 8 threads, was 61668.8 us 
+Average bytes parallel radix duration, using 16 threads, was 55738.2 us
+
+Now I'll make the radix sort function void, so it actually modifies in place instead of returning an ans vector, which is a copy of the vec ( as vec is passed by reference ).
+Encouraging results :
+Average bytes radix duration : 135711 us and the number of bits used counting sort was 8
+Average bytes parallel radix duration, using 1 threads, was 75378
+Average bytes parallel radix duration, using 2 threads, was 56966.2
+Average bytes parallel radix duration, using 4 threads, was 50761.8
+Average bytes parallel radix duration, using 8 threads, was 44104.8
+Average bytes parallel radix duration, using 16 threads, was 40372.8jeremy1110@fedora:~/msc_hpc/radix_sort$ 
+
+Not copying improves greatly the outcome.

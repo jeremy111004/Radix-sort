@@ -7,8 +7,8 @@ std::vector<unsigned int> radix_sort_byte(std::vector<unsigned int>& vec, int ve
 std::vector<unsigned int> counting_sort_byte(const std::vector<unsigned int>& vec, int digit,int vec_s);
 
 //parallel 
-std::vector<unsigned int> radix_sort_byte_parallel(std::vector<unsigned int>& vec, int vec_s,int nmr_threads);
-std::vector<unsigned int> counting_sort_byte_parallel(const std::vector<unsigned int>& vec, int digit,int vec_s,int nmr_threads);
+void radix_sort_byte_parallel(std::vector<unsigned int>& vec, int vec_s,int nmr_threads);
+void counting_sort_byte_parallel(const std::vector<unsigned int>& vec, int digit,int vec_s,int nmr_threads);
 
 
 inline constexpr int nbr_bit = 8;
