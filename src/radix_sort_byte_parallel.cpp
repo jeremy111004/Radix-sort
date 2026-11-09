@@ -3,51 +3,62 @@
 #include <omp.h>
 
 
-std::vector<unsigned int> counting_sort_byte_parallel(const std::vector<unsigned int>& vec, int digit,int vec_s,int nmr_threads){
+double t_count = 0, t_prefix = 0, t_alloc = 0, t_scatter = 0;   
+void counting_sort_byte_parallel(const std::vector<unsigned int>& vec, int digit,int vec_s,int nmr_threads, std::vector<unsigned int>& ans){
 	int nmr_el = vec_s;
-	int size_cnt = 1u<<nbr_bit; 
+	int size_cnt = 1u<<nbr_bit;
 	std::vector<std::vector<long>> cntVecSliced(nmr_threads,std::vector<long>(size_cnt,0));
-	#pragma omp parallel num_threads(nmr_threads) 
-	{	
-	#pragma omp for 
-	for(auto i : vec){
-		// here i want to select the appropriate digit for the count.	
-		unsigned int index = get_byte(i,digit);
+
+	double a = omp_get_wtime();
+	#pragma omp parallel num_threads(nmr_threads)
+	{
 		int t = omp_get_thread_num();
-		cntVecSliced[t][index]++;
-		
-	}	
+		auto& localVec = cntVecSliced[t];
+		#pragma omp for schedule(static)
+		for(auto i : vec){
+			unsigned int index = get_byte(i,digit);
+			localVec[index]++;
+		}
 	}
+	double b = omp_get_wtime();
 	// this should definitely not be done in parallel
 	long long run_tot = 0;
 	for(int i =0; i<size_cnt;i++){
 		for(int thread=0; thread<nmr_threads;thread++){
-			auto& cur_count_slot = cntVecSliced[thread][i];	
+			auto& cur_count_slot = cntVecSliced[thread][i];
 			long temp = cur_count_slot;
-			cur_count_slot = run_tot; 
+			cur_count_slot = run_tot;
 			run_tot += temp;
 		}
 	}
+	double c = omp_get_wtime();
 
-	#pragma omp barrier 
-	std::vector<unsigned int> ans(nmr_el,0);
+	
+	double d = omp_get_wtime();
+
 	#pragma omp parallel num_threads(nmr_threads)
-	{ 
-	#pragma omp for
-	for(int i = 0;i<nmr_el;i++){
-		int t = omp_get_thread_num();
-		unsigned int cur_d = vec[i];
-		unsigned int index = get_byte(cur_d,digit);
-		unsigned int place = cntVecSliced[t][index];
-		ans[place] = cur_d;
-		cntVecSliced[t][index]++;
-		
+	{
+		#pragma omp for schedule(static)
+		for(int i = 0;i<nmr_el;i++){
+			int t = omp_get_thread_num();
+			unsigned int cur_d = vec[i];
+			unsigned int index = get_byte(cur_d,digit);
+			unsigned int place = cntVecSliced[t][index];
+			ans[place] = cur_d;
+			cntVecSliced[t][index]++;
+		}
 	}
-	}
-	return ans;
+	double e = omp_get_wtime();
+
+	t_count   += b - a;
+	t_prefix  += c - b;
+	t_alloc   += d - c;
+	t_scatter += e - d;
+	
 }
 std::vector<unsigned int> radix_sort_byte_parallel(std::vector<unsigned int>& vec, int vec_s, int nmr_threads){
-	std::vector<unsigned int> ans = vec;
+	
+	std::vector<unsigned int> ans(vec_s,0);
 	auto max_e = *std::max_element(vec.begin(),vec.end());
 	int size = 0;
 	while(max_e != 0u){
@@ -56,9 +67,10 @@ std::vector<unsigned int> radix_sort_byte_parallel(std::vector<unsigned int>& ve
 	}
 
 	for(int i = 1;i<=size;i++){
-		ans = counting_sort_byte_parallel(ans, i, vec_s,nmr_threads);
+		counting_sort_byte_parallel(vec, i, vec_s,nmr_threads,ans);
+		std::swap(vec,ans);
 	}
-	return ans;
+	return vec;
 	
 }
 

@@ -12,7 +12,7 @@ int main(void){
 	std::vector<long> time_vec3 {};
 	std::vector<std::vector<long>> time_vec4(5,std::vector<long>(5,0));
 
-
+	
 	for(int i = 0; i<5;i++){
 		std::vector<int> test_vec = {};
 		for(int z=0;z<10000000;z++){ test_vec.push_back(rand());}
@@ -48,8 +48,10 @@ int main(void){
 		if(res2_int!=test_vec2){std::cout << "radix byte is wrong !!";}
 
 				// radix parallel
+		
 		std::vector<int> threads = {1,2, 4, 8, 16};
 		for (size_t t = 0; t < threads.size(); t++) {
+			t_count = t_prefix = t_alloc = t_scatter = 0;
 			auto start4 = std::chrono::high_resolution_clock::now();
 			auto res3 = radix_sort_byte_parallel(test_vec4, 10000000, threads[t]);
 			auto end4 = std::chrono::high_resolution_clock::now();
@@ -59,6 +61,10 @@ int main(void){
 			// re cast to check veracity of results
 			std::vector<int> res3_int(res3.begin(), res3.end());
 			if (res3_int != test_vec2) { std::cout << "parallel radix is wrong with " << threads[t] << " threads\n"; }
+			std::cout << threads[t] << " threads | count "  << t_count*1e3
+          	<< " ms | prefix "  << t_prefix*1e3
+          	<< " ms | alloc "   << t_alloc*1e3
+          	<< " ms | scatter " << t_scatter*1e3 << " ms\n";
 		}
 		
 

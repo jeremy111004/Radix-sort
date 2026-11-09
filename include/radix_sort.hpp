@@ -21,3 +21,5 @@ inline unsigned int get_byte(unsigned int x, int digit) {
 	key = (x&mask);
     	return key;
 }
+
+extern double t_count, t_prefix, t_alloc, t_scatter;

@@ -59,3 +59,39 @@ n = 100,000 `rand()` values, 8 bits per digit, 5 runs per execution, 5 execution
 Times are the median of the 5 executions.
 We see an improvement, but it's quite light. I'd say the openMP threads coordination is the culprit, + Amdham's law obviously. I'll now try to parallelize the scatter part as well.
 
+
+#Fully parallel sort; I had to edit the whole thing, which was quite hard and tricky; now it does the scatter part forwardly instead of backwardly. I profiled it with hotspot and I got this, regarding where does the parallel function spends its time 
+
+### Phase 1: counting loop
+
+| Line   | Code                                 | Self time |
+|--------|--------------------------------------|-----------|
+| cpp:17 | `cntVecSliced[t][index]++`           | 48.9%     |
+| hpp:20 | `get_byte`: `(x >> shift) & mask`    | 24.4%     |
+| cpp:19 | loop end / jump back                 | 16.5%     |
+| stl_iterator.h | range-for iterator (inlined) | 10.3%     |
+
+→ Half the time is the counter update (2-level vector access + load/add/store).
+  Key extraction is a quarter, loop overhead ~27%.
+
+### Phase 3: scatter loop
+
+| Line   | Code                                 | Self time |
+|--------|--------------------------------------|-----------|
+| cpp:43 | `cntVecSliced[t][index]++`           | 65.4%     |
+| cpp:42 | `ans[place] = cur_d`                 | 30.5%     |
+| other  | `vec[i]`, `get_byte`, reading `place`| ~4%       |
+
+I'm going to try to improve the data loading to reduce that huge part of the cpu's time which is just to fetch the correct place to increment it
+
+09/11: I measured how long each part of the program takes with omp_get_wtime(); to see where is the program actually spending time, and here is the result :
+1 threads | count 17.8321 ms | prefix 0.005936 ms | alloc 51.1692 ms | scatter 30.8378 ms
+2 threads | count 9.95673 ms | prefix 0.005935 ms | alloc 50.2348 ms | scatter 19.4825 ms
+4 threads | count 9.10543 ms | prefix 0.009499 ms | alloc 54.8724 ms | scatter 18.9387 ms
+8 threads | count 5.59814 ms | prefix 0.015434 ms | alloc 55.3473 ms | scatter 13.9651 ms
+16 threads | count 7.05139 ms | prefix 0.028496 ms | alloc 55.2927 ms | scatter 9.94248 ms
+
+count gets better with multithreading, prefix seems a bit random but is a very small share of the time anyway, alloc is steady, and scatter significantly improve with more threads. 
+Alloc takes more than half of each run, which makes sense as the vector used are really big, but I need to think of a better way
+
+I implemented it by changing the way it handles vec; now instead of creating a new ans vector at every pass (up to 4),it uses the same address and simply recycle it. Counting sort is now void.
