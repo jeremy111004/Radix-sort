@@ -9,3 +9,4 @@ build/
 perf.data.old
 perf.data
 benchmark_radix_sort1
+test_max
