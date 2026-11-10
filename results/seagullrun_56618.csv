@@ -1,0 +1,9 @@
+machine,algo,n,threads,time_ms
+seagull,sequential,100000000,16,3516.907
+seagull,std,100000000,16,8867.726
+seagull,decimal,100000000,16,14599.747
+seagull,parallel,100000000,1,3689.601
+seagull,parallel,100000000,2,2410.419
+seagull,parallel,100000000,4,1413.852
+seagull,parallel,100000000,8,844.832
+seagull,parallel,100000000,16,589.084
