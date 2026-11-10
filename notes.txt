@@ -90,3 +90,15 @@ Average bytes parallel radix duration, using 8 threads, was 44104.8
 Average bytes parallel radix duration, using 16 threads, was 40372.8jeremy1110@fedora:~/msc_hpc/radix_sort$ 
 
 Not copying improves greatly the outcome.
+
+Last thing I could time was in the radix sort itself; I check the time it takes to create the ans vector, and the time it takes to find the max_element, here are the results :
+
+Time to create vec_s is 11.758970 ms, and time to find max element is 11.700791 ms16 threads | count 5.5791 ms | prefix 0.028495 ms | alloc 0.005936 ms | scatter 8.48085 ms
+So it's quite a big share of total time, and it's worth thinking about.
+
+I built a very simple an easy parallel version of std::max_element, that simply divides the work between the threads, and that select the maximum in an omp critical part. The speed up is real:
+
+Time to create vec_s is 12.074893 ms, and time to find max element is 1.169495 ms
+8 threads | count 5.47941 ms | prefix 0.014248 ms | alloc 0.004748 ms | scatter 11.9562 ms
+
+That was an easy win

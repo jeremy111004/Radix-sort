@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-
+unsigned int find_max_element(const std::vector<unsigned int>& vec,int nmr_t,long long vec_s);
 std::vector<int> radix_sort(std::vector<int>& vec);
 //byte version
 std::vector<unsigned int> radix_sort_byte(std::vector<unsigned int>& vec, int vec_s);
@@ -23,3 +23,5 @@ inline unsigned int get_byte(unsigned int x, int digit) {
 }
 
 extern double t_count, t_prefix, t_alloc, t_scatter;
+
+

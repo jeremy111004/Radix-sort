@@ -1,7 +1,7 @@
 CXX      = g++
 CXXFLAGS = -O2 -g -Wall -Wextra -std=c++17 -fopenmp
 
-SRCS = benchmark/main.cpp src/radix_sort_seq.cpp src/radix_sort_byte.cpp src/radix_sort_byte_parallel.cpp 
+SRCS = benchmark/main.cpp src/radix_sort_seq.cpp src/radix_sort_byte.cpp src/radix_sort_byte_parallel.cpp src/find_max_element.cpp 
 HDRS = include/radix_sort.hpp
 
 bench: $(SRCS) $(HDRS)

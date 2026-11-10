@@ -1,7 +1,8 @@
 #include "../include/radix_sort.hpp"
 #include <algorithm>
+#include <cstdio>
 #include <omp.h>
-
+#include <iostream>
 
 double t_count = 0, t_prefix = 0, t_alloc = 0, t_scatter = 0;   
 void counting_sort_byte_parallel(const std::vector<unsigned int>& vec, int digit,int vec_s,int nmr_threads, std::vector<unsigned int>& ans){
@@ -57,9 +58,11 @@ void counting_sort_byte_parallel(const std::vector<unsigned int>& vec, int digit
 	
 }
 void radix_sort_byte_parallel(std::vector<unsigned int>& vec, int vec_s, int nmr_threads){
-	
+	auto t1_b = omp_get_wtime();
 	std::vector<unsigned int> ans(vec_s,0);
-	auto max_e = *std::max_element(vec.begin(),vec.end());
+	auto t1_m = omp_get_wtime();
+	auto max_e = find_max_element(vec,nmr_threads,vec_s);
+	auto t2_m = omp_get_wtime();
 	int size = 0;
 	while(max_e != 0u){
 		max_e >>= (nbr_bit);
@@ -69,6 +72,7 @@ void radix_sort_byte_parallel(std::vector<unsigned int>& vec, int vec_s, int nmr
 	for(int i = 1;i<=size;i++){
 		counting_sort_byte_parallel(vec, i, vec_s,nmr_threads,ans);
 		std::swap(vec,ans);
-	}	
+	}
+	printf("Time to create vec_s is %f ms, and time to find max element is %f ms",(t1_m-t1_b)*1e3,(t2_m-t1_m)*1e3); 
 }
 
