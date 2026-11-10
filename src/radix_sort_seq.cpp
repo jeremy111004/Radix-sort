@@ -1,8 +1,8 @@
 #include <algorithm>
 #include "../include/radix_sort.hpp"
+#include <algorithm>
 
-
-int get_digit(int x, int digit) {        
+unsigned int get_digit(int x, int digit) {        
 	int key = 0;
     for (int d = 0; d < digit; d++) {
         key = x % 10;
@@ -10,8 +10,7 @@ int get_digit(int x, int digit) {
     }
     return key;
 }
-std::vector<int> counting_sort(const std::vector<int>& vec, int digit){
-	int nmr_el = vec.size();	
+void counting_sort(const std::vector<unsigned int>& vec, int digit,std::vector<unsigned int>& ans,long long vec_size){	
 	std::vector<int> cntVec(10,0);
 
 	for(auto i : vec){
@@ -23,36 +22,34 @@ std::vector<int> counting_sort(const std::vector<int>& vec, int digit){
 
 	for(int i = 1; i<10;i++){
 		cntVec[i] += cntVec[i-1];
-	}
-	std::vector<int> ans(nmr_el,0);
-	for(int i = nmr_el-1;i>=0;i--){
+	}	
+	for(int i = vec_size-1;i>=0;i--){
 		int cur_d = vec[i];
 		int index = get_digit(cur_d,digit);
 		int place = cntVec[index];
 		cntVec[index]--;
 		ans[place-1] = cur_d;
 	}
-	return ans;
+	
 
 
 }
-std::vector<int> radix_sort(std::vector<int>& vec){
-	int max_el = *std::max_element(vec.begin(),vec.end());	
+void radix_sort(std::vector<unsigned int>& vec,long long vec_size){
+	if(vec_size==0)return;
+	unsigned int max_el = 0;
+	for (std::size_t i = 0; i < vec.size(); i++) max_el= std::max(max_el, vec[i]);
 	int size = 0;
 	while(max_el!=0){
 		max_el/=10;
 		size++;
 	}
 
-	std::vector<int> ans;
-	ans = vec;
+	std::vector<unsigned int> ans(vec_size,0);
 	for(int i = 1; i<=size;i++){
 		// loop for each digit;
-		ans = counting_sort(ans, i);
-	
-		
+		counting_sort(vec, i,ans,vec_size);
+		std::swap(vec,ans);
 	}
-	return ans;
 }
 
 

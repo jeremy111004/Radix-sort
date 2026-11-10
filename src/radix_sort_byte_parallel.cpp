@@ -2,15 +2,15 @@
 #include <algorithm>
 #include <cstdio>
 #include <omp.h>
-#include <iostream>
 
-double t_count = 0, t_prefix = 0, t_alloc = 0, t_scatter = 0;   
+
+
 void counting_sort_byte_parallel(const std::vector<unsigned int>& vec, int digit,int vec_s,int nmr_threads, std::vector<unsigned int>& ans){
 	int nmr_el = vec_s;
 	int size_cnt = 1u<<nbr_bit;
 	std::vector<std::vector<long>> cntVecSliced(nmr_threads,std::vector<long>(size_cnt,0));
 
-	double a = omp_get_wtime();
+
 	#pragma omp parallel num_threads(nmr_threads)
 	{
 		int t = omp_get_thread_num();
@@ -21,7 +21,7 @@ void counting_sort_byte_parallel(const std::vector<unsigned int>& vec, int digit
 			localVec[index]++;
 		}
 	}
-	double b = omp_get_wtime();
+
 	// this should definitely not be done in parallel
 	long long run_tot = 0;
 	for(int i =0; i<size_cnt;i++){
@@ -32,11 +32,6 @@ void counting_sort_byte_parallel(const std::vector<unsigned int>& vec, int digit
 			run_tot += temp;
 		}
 	}
-	double c = omp_get_wtime();
-
-	
-	double d = omp_get_wtime();
-
 	#pragma omp parallel num_threads(nmr_threads)
 	{
 		#pragma omp for schedule(static)
@@ -49,20 +44,17 @@ void counting_sort_byte_parallel(const std::vector<unsigned int>& vec, int digit
 			cntVecSliced[t][index]++;
 		}
 	}
-	double e = omp_get_wtime();
 
-	t_count   += b - a;
-	t_prefix  += c - b;
-	t_alloc   += d - c;
-	t_scatter += e - d;
+
+	
 	
 }
 void radix_sort_byte_parallel(std::vector<unsigned int>& vec, int vec_s, int nmr_threads){
-	auto t1_b = omp_get_wtime();
+
 	std::vector<unsigned int> ans(vec_s,0);
-	auto t1_m = omp_get_wtime();
+
 	auto max_e = find_max_element(vec,nmr_threads,vec_s);
-	auto t2_m = omp_get_wtime();
+
 	int size = 0;
 	while(max_e != 0u){
 		max_e >>= (nbr_bit);
@@ -73,6 +65,6 @@ void radix_sort_byte_parallel(std::vector<unsigned int>& vec, int vec_s, int nmr
 		counting_sort_byte_parallel(vec, i, vec_s,nmr_threads,ans);
 		std::swap(vec,ans);
 	}
-	printf("Time to create vec_s is %f ms, and time to find max element is %f ms",(t1_m-t1_b)*1e3,(t2_m-t1_m)*1e3); 
+	
 }
 

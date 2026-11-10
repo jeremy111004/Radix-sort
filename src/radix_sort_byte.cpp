@@ -2,8 +2,8 @@
 #include <algorithm>
 
 
-std::vector<unsigned int> counting_sort_byte(const std::vector<unsigned int>& vec, int digit,int vec_s){
-	int nmr_el = vec_s;
+void counting_sort_byte(const std::vector<unsigned int>& vec, int digit,long long vec_size,std::vector<unsigned int>& ans){
+	int nmr_el = vec_size;
 	int size_cnt = 1u<<nbr_bit; 
 	std::vector<unsigned int> cntVec(size_cnt,0);
 
@@ -17,28 +17,28 @@ std::vector<unsigned int> counting_sort_byte(const std::vector<unsigned int>& ve
 	for(int i = 1; i<size_cnt;i++){
 		cntVec[i] += cntVec[i-1];
 	}
-	std::vector<unsigned int> ans(nmr_el,0);
+
 	for(int i = nmr_el-1;i>=0;i--){
 		unsigned int cur_d = vec[i];
 		unsigned int index = get_byte(cur_d,digit);
 		unsigned int place = cntVec[index];
 		cntVec[index]--;
 		ans[place-1] = cur_d;
-	}
-	return ans;
+	}	
 }
-std::vector<unsigned int> radix_sort_byte(std::vector<unsigned int>& vec, int vec_s){
-	std::vector<unsigned int> ans = vec;
-	auto max_e = *std::max_element(vec.begin(),vec.end());
+void radix_sort_byte(std::vector<unsigned int>& vec, long long vec_size){	
+	unsigned int max_e = 0;
+	for (std::size_t i = 0; i < vec.size(); i++) max_e = std::max(max_e, vec[i]);
 	int size = 0;
 	while(max_e != 0u){
 		max_e >>= (nbr_bit);
 		size++;
 	}
+	std::vector<unsigned int> ans(vec_size,0);
 
 	for(int i = 1;i<=size;i++){
-		ans = counting_sort_byte(ans, i, vec_s);
+		counting_sort_byte(vec, i, vec_size,ans);
+		std::swap(vec,ans);
 	}
-	return ans;
 	
 }

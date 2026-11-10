@@ -1,6 +1,6 @@
 Working notes and observations while building the project. These are my thoughts
 and thinking process, not polished results.
-
+06/11
 Notes start at the parallel radix because before that it was fairly simple optimization, and quite straightforward.
 
 I tried to parallelized only half of the radix byte (namely the counting part), to see how it'd perform. My results were the following
@@ -32,7 +32,7 @@ n = 100,000 `rand()` values, 8 bits per digit, 5 runs per execution, 5 execution
 Times are the median of the 5 executions.
 We see an improvement, but it's quite light. I'd say the openMP threads coordination is the culprit, + Amdham's law obviously. I'll now try to parallelize the scatter part as well.
 
-
+08/11
 #Fully parallel sort; I had to edit the whole thing, which was quite hard and tricky; now it does the scatter part forwardly instead of backwardly. I profiled it with hotspot and I got this, regarding where does the parallel function spends its time 
 
 ### Phase 1: counting loop
@@ -101,4 +101,46 @@ I built a very simple an easy parallel version of std::max_element, that simply 
 Time to create vec_s is 12.074893 ms, and time to find max element is 1.169495 ms
 8 threads | count 5.47941 ms | prefix 0.014248 ms | alloc 0.004748 ms | scatter 11.9562 ms
 
-That was an easy win
+That was an easy Working
+
+ 10/10:
+ Today I tried to make the comparison more fair: I made all the different version void + reusing the ans vector and swapping it with vec at each iteration. For non parallel functions, I also changed std::max_element because when I ran radix_sort_byte with std::max_element vs radix_sort_byte_parallel on ONE THREAD, the parallel version was faster, which induces the fact that a basic for loop to find the max IS faster than max_element. So I replaced max_element by a basic for loop for the sequential and non parallel byte version. I would now say that the comparison are fair, and here are the result of the run: 
+
+ Average basic radix duration : 800745 us
+Average std::sort duration : 464198 us
+Average bytes radix duration : 62746 us and the number of bits used counting sort was 8
+Average bytes parallel radix duration, using 1 threads, was 65622
+Average bytes parallel radix duration, using 2 threads, was 46006.8
+Average bytes parallel radix duration, using 4 threads, was 40058.4
+Average bytes parallel radix duration, using 8 threads, was 32872.8
+Average bytes parallel radix duration, using 16 threads, was 28802
+
+Compared to the previous run (09/11), we see an improvement on basic AND byte radix (due to the removal of max_element + buffer reused as explained before), and 1 thread parallel radix is almost taking as much time as radix byte, if we account for the short openMP overhead. 
+
+So as it is, before further implementations, the result table is the following :
+
+RADIX SORT RESULTS - n = 10,000,000 unsigned int, times in ms ("-" = not measured in that run)
+
+OPTIMISATION STEPS
+Step                              | Decimal        | Byte seq      | Parallel 1 thr | Parallel 16 thr
+----------------------------------+----------------+---------------+----------------+----------------
+Parallel: buffer reuse            | 967.6          | 133.0         | 91.3           | 55.7
+Parallel: void in-place           | -              | 135.7         | 75.4  (-17%)   | 40.4  (-27%)
+Parallel: parallel max            | 955.5          | 132.7         | 66.7  (-12%)   | 30.4  (-25%)
+Sequential: buffer reuse + void   | 809.3  (-15%)  | 70.3  (-47%)  | 65.4           | 28.2
+Sequential: max loop              | 800.7  (-1%)   | 62.7  (-11%)  | 65.6           | 28.8
+
+
+FINAL COMPARISON (latest run)
+Version                   | Time (ms) | vs decimal radix | vs std::sort | vs byte seq
+--------------------------+-----------+------------------+--------------+------------
+Decimal radix             | 800.7     | 1.00x            | 0.58x        | 0.08x
+std::sort                 | 464.2     | 1.72x            | 1.00x        | 0.14x
+Byte radix, sequential    | 62.7      | 12.8x            | 7.4x         | 1.00x
+Parallel, 1 thread        | 65.6      | 12.2x            | 7.1x         | 0.96x
+Parallel, 2 threads       | 46.0      | 17.4x            | 10.1x        | 1.36x
+Parallel, 4 threads       | 40.1      | 20.0x            | 11.6x        | 1.57x
+Parallel, 8 threads       | 32.9      | 24.3x            | 14.1x        | 1.91x
+Parallel, 16 threads      | 28.8      | 27.8x            | 16.1x        | 2.18x
+
+Now I'll edit the main so it takes argc and argv so we can run only what's interesting us.
